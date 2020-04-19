@@ -1,0 +1,120 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+#
+#
+#
+
+use XML::Twig;
+use URI::Escape;
+
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Quotekeys = 0;
+
+sub parse {
+    my $db = {};
+
+    my $twig = XML::Twig->nparse("http://192.168.1.254/nonAuth/wan_conn.xml");
+    if (!defined($twig)) {
+        die("Could not fetch XML");
+    }
+    my $root = $twig->root;
+
+    for my $elt ($root->children()) {
+        my $name = $elt->name();
+        my $value = uri_unescape($elt->{'att'}->{'value'});
+        my $type = $elt->{'att'}->{'type'};
+
+        if (defined($type) && $type eq 'array') {
+            sub null {return undef;}
+
+            $value = eval($value);
+
+            for my $entry (@{$value}) {
+                if (defined($entry) && scalar(@{$entry})==1) {
+                    @{$entry} = split(';', $entry->[0]);
+                }
+            }
+        }
+
+        if ($name eq 'ip4_info_list') {
+            for my $conn (@{$value}) {
+                my $new = {};
+                $new->{'BroadbandIP'} = $conn->[0];
+                $new->{'netmask'} = $conn->[1];
+                $new->{'DefaultGateway'} = $conn->[2];
+                $new->{'PrimaryDNS'} = $conn->[3];
+                $new->{'SecondaryDNS'} = $conn->[4];
+                $conn = $new;
+            }
+        } elsif ($name eq 'wan_linestatus_rate_list') {
+            for my $conn (@{$value}) {
+                my $new = {};
+                $new->{'state'} = $conn->[0];
+                $new->{'mode'} = $conn->[1];
+                $new->{'mod_type'} = $conn->[2];
+                $new->{'snr_margin_down'} = $conn->[3];
+                $new->{'snr_margin_up'} = $conn->[4];
+                $new->{'latn_down'} = $conn->[5];
+                $new->{'latn_up'} = $conn->[6];
+                $new->{'satn_down'} = $conn->[7];
+                $new->{'satn_up'} = $conn->[8];
+                $new->{'output_power_down'} = $conn->[9];
+                $new->{'output_power_up'} = $conn->[10];
+                $new->{'rate_down'} = $conn->[11];
+                $new->{'rate_up'} = $conn->[12];
+                $new->{'attainable_rate_down'} = $conn->[13];
+                $new->{'attainable_rate_up'} = $conn->[14];
+                $new->{'chantype'} = $conn->[15];
+                $conn = $new;
+            }
+        } elsif ($name eq 'status_rate') {
+            for my $conn (@{$value}) {
+                my $new = {};
+                $new->{'rate_up'} = $conn->[0];
+                $new->{'rate_down'} = $conn->[1];
+                $new->{'unknown1'} = $conn->[2];
+                $new->{'unknown2'} = $conn->[3];
+                $conn = $new;
+            }
+        }
+
+        $db->{$name} = $value;
+    }
+    return $db;
+}
+
+sub render_fetch {
+    ...
+    # wan_conn_volume_list looks like byte counters
+    # wan_linestatus_rate_list has rate / available rate / snr
+    # sysuptime
+    # status_rate has rate (again)
+    #
+}
+
+sub main {
+    if (($ARGV[0]||'') eq 'suggest') {
+        ...
+        # TODO:
+        # - check if there is a 192.168.1.254 port 80 on the network?
+    }
+    if (($ARGV[0]||'') eq 'config') {
+        ...;
+        return;
+    }
+
+    my $db = parse();
+
+    if (($ARGV[0]||'') eq 'debug') {
+        print(Dumper($db));
+        return;
+    }
+
+    render_fetch($db);
+}
+unless(caller) {
+    main();
+}
