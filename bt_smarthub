@@ -33,7 +33,7 @@ sub parse {
             $value = eval($value);
 
             for my $entry (@{$value}) {
-                if (defined($entry) && scalar(@{$entry})==1) {
+                if (defined($entry) && scalar(@{$entry})==1 && defined($entry->[0])) {
                     @{$entry} = split(';', $entry->[0]);
                 }
             }
