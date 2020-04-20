@@ -79,6 +79,22 @@ sub parse {
                 $new->{'unknown2'} = $conn->[3];
                 $conn = $new;
             }
+        } elsif ($name eq 'wan_conn_status_list') {
+            for my $conn (@{$value}) {
+                my $new = {};
+                $new->{'connected'} = $conn->[0];
+                $new->{'connected_at'} = $conn->[1];
+                $new->{'unknown1'} = $conn->[2];
+                $conn = $new;
+            }
+        } elsif ($name eq 'wan_conn_volume_list') {
+            for my $conn (@{$value}) {
+                my $new = {};
+                $new->{'unknown1'} = $conn->[0];
+                $new->{'Downloaded'} = $conn->[1];
+                $new->{'Uploaded'} = $conn->[2];
+                $conn = $new;
+            }
         }
 
         $db->{$name} = $value;
