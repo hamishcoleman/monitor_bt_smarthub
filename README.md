@@ -1,5 +1,12 @@
 Connect to a BT Smart Hub 2 Web interface and fetch some status information.
 
+To use:
+
+    ./bt_smarthub debug
+
+Downloads data from the device, adds field titles where known and dumps all
+the information.
+
 ## Some useful URLs
 
 None of these URLs need authentication when accessed from the LAN.  Most of
